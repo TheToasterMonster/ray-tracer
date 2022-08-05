@@ -23,12 +23,14 @@ void Renderer::OnResize(uint32_t width, uint32_t height)
 
 void Renderer::Render()
 {
+	float aspectRatio = m_FinalImage->GetWidth() / (float)m_FinalImage->GetHeight();
 	for (uint32_t y = 0; y < m_FinalImage->GetHeight(); y++)
 	{
 		for (uint32_t x = 0; x < m_FinalImage->GetWidth(); x++)
 		{
 			glm::vec2 coord = { (float)x / (float)m_FinalImage->GetWidth(), (float)y / (float)m_FinalImage->GetHeight() };
 			coord = coord * 2.0f - 1.0f; // -1 -> 1
+			coord.x *= aspectRatio;
 			m_ImageData[x + y * m_FinalImage->GetWidth()] = PerPixel(coord);
 		}
 	}
@@ -56,10 +58,27 @@ uint32_t Renderer::PerPixel(glm::vec2 coord)
 
 	// Quadratic forumula discriminant:
 	// b^2 - 4ac
-
 	float discriminant = b * b - 4.0f * a * c;
-	if (discriminant >= 0.0f)
-		return 0xffff00ff;
+	if (discriminant < 0.0f)
+		return 0xff << 24;
 
-	return 0xff000000;
+	// Quadratic formula:
+	// (-b +- sqrt(discriminant)) / 2a
+	float discriminantSqrt = sqrt(discriminant);
+	float t[2] = {
+		(-b - discriminantSqrt) / (2.0f * a),
+		(-b + discriminantSqrt) / (2.0f * a)
+	};
+
+	glm::vec3 hitPoint = rayOrigin + rayDirection * t[0];
+	glm::vec3 normal = glm::normalize(hitPoint - glm::vec3(0.0f));
+
+	glm::vec3 lightDirection(-0.5f, -0.5f, -0.5f);
+	lightDirection = glm::normalize(lightDirection);
+
+	//glm::vec3 color(1.0f, 0.0f, 1.0f);
+	//glm::vec3 color = normal * 0.5f + 0.5f;
+	float lightIntensity = glm::max(glm::dot(-lightDirection, normal), 0.0f);
+	glm::vec3 color = glm::vec3(1.0f, 0.0f, 0.0f) * lightIntensity;
+	return ((int)(color.x * 255)) | ((int)(color.y * 255) << 8) | ((int)(color.z * 255) << 16) | (0xff << 24);
 }
