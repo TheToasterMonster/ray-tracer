@@ -99,6 +99,14 @@ void Renderer::Render()
 }
 
 
+uint32_t Renderer::ConvertToRGBA(const glm::vec4& color)
+{
+	return ((uint32_t)(color.r * 255))
+		 | ((uint32_t)(color.g * 255) << 8)
+		 | ((uint32_t)(color.b * 255) << 16)
+		 | ((uint32_t)(color.a * 255) << 24);
+}
+
 uint32_t Renderer::CalcPixelForSphere(const glm::vec2& coord, const Sphere& sphere)
 {
 	glm::vec3 rayOrigin(0.0f, 0.0f, 2.0f);
@@ -149,7 +157,7 @@ uint32_t Renderer::CalcPixelForSphere(const glm::vec2& coord, const Sphere& sphe
 	//glm::vec3 color = normal * 0.5f + 0.5f;
 	float lightIntensity = glm::max(glm::dot(-lightDirection, normal), 0.0f);
 	glm::vec3 color = glm::vec3(1.0f, 1.0f, 0.0f) * lightIntensity;
-	return ((int)(color.r * 255)) | ((int)(color.g * 255) << 8) | ((int)(color.b * 255) << 16) | (0xff << 24);
+	return ConvertToRGBA(glm::vec4(color, 1.0f));
 }
 
 uint32_t Renderer::PerPixel(const glm::vec2& coord)
